@@ -1,8 +1,11 @@
 use std::{fs, collections::HashSet};
 
 fn main() {
-    let mut head = (0, 0);
-    let mut tail = (0, 0);
+    let num_knots = 2;
+    let mut knots: Vec<(i32, i32)> = Vec::new();
+    for _ in 0..num_knots{
+        knots.push((0, 0))
+    }
     let mut tail_positions: HashSet::<(i32, i32)> = HashSet::new();
 
     let lines = fs::read_to_string("input.txt").expect("File not found");
@@ -22,41 +25,44 @@ fn main() {
             "D" => (0, -1),
             _ => panic!("Unknown direction"),
         };
-        // println!("incremenet is {:?}", increment);
 
         // find H position after it has followed directions
         for _step in 0..steps_int{
             //  move head
-            head.0 += increment.0;
-            head.1 += increment.1;
+            knots[0].0 += increment.0;
+            knots[0].1 += increment.1;
 
             // move tail
-            tail = match (head.0 - tail.0, head.1 - tail.1) {
-                // If the head is ever two steps directly up, down, left, or right from the tail,
-                // the tail must also move one step in that direction so it remains
-                // close enough
-                (2, 0) => (tail.0 + 1, tail.1), // right
-                (0, 2) => (tail.0, tail.1 + 1), // up
-                (-2, 0) => (tail.0 - 1, tail.1), // left
-                (0, -2) => (tail.0, tail.1 -1), // down
-                // Otherwise, if the head and tail aren't touching 
-                (0, 0) => tail, // same
-                // and aren't in the same row or column, 
-                (_, 0) => tail,
-                (0, _) => tail,
-                // (and aren't diagonally adjacent)
-                (1, 1) => tail,
-                (-1, 1) => tail,
-                (1, -1) => tail,
-                (-1, -1) => tail,
-                // the tail always moves one step diagonally to keep up
-                (x, y) => (tail.0 + (x / x.abs()), tail.1 + (y / y.abs())),
-                _ => panic!("can't handle difference"),
-            };
+            for i in 1..num_knots {
+                let current_knot = knots[i];
+                let previous_knot = knots[i - 1];
+                knots[i] = match (previous_knot.0 - current_knot.0, previous_knot.1 - current_knot.1) {
+                    // If the head is ever two steps directly up, down, left, or right from the tail,
+                    // the tail must also move one step in that direction so it remains
+                    // close enough
+                    (2, 0) => (current_knot.0 + 1, current_knot.1), // right
+                    (0, 2) => (current_knot.0, current_knot.1 + 1), // up
+                    (-2, 0) => (current_knot.0 - 1, current_knot.1), // left
+                    (0, -2) => (current_knot.0, current_knot.1 -1), // down
+                    // Otherwise, if the head and tail aren't touching 
+                    (0, 0) => current_knot, // same
+                    // and aren't in the same row or column, 
+                    (_, 0) => current_knot,
+                    (0, _) => current_knot,
+                    // (and aren't diagonally adjacent)
+                    (1, 1) => current_knot,
+                    (-1, 1) => current_knot,
+                    (1, -1) => current_knot,
+                    (-1, -1) => current_knot,
+                    // the tail always moves one step diagonally to keep up
+                    (x, y) => (current_knot.0 + (x / x.abs()), current_knot.1 + (y / y.abs())),
+                };
+            }
+            
             // println!("tail is at {:?}", tail);
-            tail_positions.insert(tail);
+            tail_positions.insert(*knots.last().unwrap());
 
-            // print_grid(head, tail);
+            // print_grid(&knots);
             // println!("head position {:?}", head);
         }
     }
@@ -64,16 +70,14 @@ fn main() {
     println!("there are {:?} unique positions", tail_positions.len());
 }
 
-fn print_grid(head: (i32, i32), tail: (i32, i32)) {
-    let x = [head.0, head.1, tail.0, tail.1];
-    let grid_size = x.iter().fold(0, |a, &b| a.max(b)) + 1;
+fn print_grid(knots: &Vec<(i32, i32)>) {
+    let grid_size = 6;
     print!("\n");
     for y in (0..grid_size).rev() {
         for x in 0..grid_size {
-            if (x, y) == head {
-                print!("H")
-            } else if (x, y) == tail {
-                print!("T")
+            if knots.contains(&(x, y)) {
+                let p = &knots.iter().position(|&(a, b)| (x, y) == (a, b)).unwrap();
+                print!("{p}")
             } else if (x, y) == (0, 0) {
                 print!("s")
             } else {
