@@ -19,12 +19,10 @@ fn main() {
         let current_row = &grid[i];
         for j in 0..grid_size {
             let current_tree_height = grid[i][j];
-            let current_column: Vec<u8> = (0..grid_size).map(|x| grid[x][j]).collect();
-            let look_left = tree_is_tallest(current_tree_height, current_row[0..j].to_vec());
-            let look_right = tree_is_tallest(current_tree_height, current_row[j+1..grid[i].len()].to_vec());
-            let look_up = tree_is_tallest(current_tree_height, current_column[0..i].to_vec());
-            let look_down = tree_is_tallest(current_tree_height, current_column[i+1..grid.len()].to_vec());
-            if look_left || look_right || look_up || look_down {
+            let current_col: Vec<u8> = (0..grid_size).map(|x| grid[x][j]).collect();
+            let visible_in_row = tree_is_tallest(current_tree_height, partition(current_row, j, grid_size));
+            let visible_in_col = tree_is_tallest(current_tree_height, partition(&current_col, i, grid_size));
+            if visible_in_row || visible_in_col {
                 num_visible_trees += 1;
             }
         }
@@ -33,6 +31,10 @@ fn main() {
 
 }
 
-fn tree_is_tallest(height: u8, slice: Vec<u8>) -> bool {
-    slice.into_iter().all(|t| t < height)
+fn partition(row: &Vec<u8>, p: usize, grid_size: usize) -> Vec<Vec<u8>>{
+    vec![row[0..p].to_vec(), row[p+1..grid_size].to_vec()]
+}
+
+fn tree_is_tallest(height: u8, slices: Vec<Vec<u8>>) -> bool {
+    slices.iter().any(|s| s.into_iter().all(|t| t < &height))
 }
